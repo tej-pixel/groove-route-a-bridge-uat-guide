@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Groove — Route A Collection Bridge · UAT Walkthrough</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#0f1729; --card:#ffffff; --ink:#0f172a; --muted:#5b6b86;
+    --line:#e4e9f2; --accent:#0f8fe4; --accent-d:#0b6fb3; --teal:#0fb6a8;
+    --green:#16a34a; --green-bg:#ecfdf3; --amber:#b45309; --amber-bg:#fff7ed;
+    --red:#dc2626; --red-bg:#fef2f2; --slate-bg:#f6f8fc;
+    --radius:14px; --shadow:0 1px 3px rgba(16,30,54,.08),0 8px 24px rgba(16,30,54,.06);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--slate-bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent-d);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* layout */
+  .wrap{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+  /* sidebar */
+  aside{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--bg);color:#cdd8ec;padding:24px 18px}
+  .brand{font-weight:800;font-size:16px;color:#fff;letter-spacing:.2px}
+  .brand small{display:block;font-weight:500;color:#8aa0c4;font-size:12px;margin-top:4px;letter-spacing:.4px}
+  .navlabel{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#6f86ad;margin:22px 0 8px}
+  nav a{display:block;color:#cdd8ec;padding:7px 10px;border-radius:8px;font-size:13.5px;margin-bottom:2px}
+  nav a:hover{background:#18233c;text-decoration:none;color:#fff}
+  nav a .n{display:inline-block;width:20px;color:#5f7aa8}
+  .pill{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .pill.ok{background:rgba(22,163,74,.18);color:#7ee2a8}
+  .pill.rd{background:rgba(15,143,228,.18);color:#8fd0ff}
+  .pill.wt{background:rgba(180,83,9,.22);color:#f5c089}
+
+  /* main */
+  main{padding:0 0 80px}
+  .hero{background:linear-gradient(135deg,#0f1729,#15315a 60%,#0b6fb3);color:#fff;padding:38px 44px 34px}
+  .tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.14);
+    padding:5px 11px;border-radius:999px;color:#dce9ff}
+  .hero h1{margin:14px 0 6px;font-size:30px;line-height:1.15;font-weight:800}
+  .hero p{margin:0;color:#c7d6ef;max-width:760px;font-size:15px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .chip{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 12px;font-size:12.5px}
+  .chip b{color:#fff}.chip span{color:#a9c0e4}
+
+  .content{padding:30px 44px;max-width:1000px}
+  section{scroll-margin-top:16px;margin-bottom:34px}
+  h2{font-size:22px;margin:8px 0 4px;display:flex;align-items:center;gap:10px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;
+    background:var(--accent);color:#fff;font-size:14px;font-weight:700;flex:none}
+  h3{font-size:15px;margin:18px 0 8px;color:var(--ink)}
+  .areatag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:24px 26px;margin-bottom:18px}
+  .lead{color:var(--muted);font-size:14.5px;margin:2px 0 0}
+
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid transparent}
+  .b-ok{background:var(--green-bg);color:var(--green);border-color:#bbf7d0}
+  .b-rd{background:#eff6ff;color:var(--accent-d);border-color:#bfdbfe}
+  .b-wt{background:var(--amber-bg);color:var(--amber);border-color:#fed7aa}
+
+  ol.steps{margin:6px 0 0;padding-left:0;counter-reset:s;list-style:none}
+  ol.steps li{position:relative;padding:8px 0 8px 38px;border-bottom:1px dashed var(--line)}
+  ol.steps li:last-child{border-bottom:0}
+  ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:8px;width:24px;height:24px;
+    background:var(--slate-bg);border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:var(--accent-d)}
+  code{background:#eef2f9;border:1px solid #e0e7f1;border-radius:5px;padding:1px 6px;font-size:12.5px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;color:#1e3a5f}
+
+  .callout{border-radius:12px;padding:13px 16px;margin:14px 0;font-size:14px;border:1px solid}
+  .callout .h{font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+  .expect{background:var(--green-bg);border-color:#bbf7d0}.expect .h{color:var(--green)}
+  .note{background:var(--amber-bg);border-color:#fed7aa}.note .h{color:var(--amber)}
+  .danger{background:var(--red-bg);border-color:#fecaca}.danger .h{color:var(--red)}
+
+  figure{margin:16px 0 6px}
+  figure img{width:100%;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);display:block}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:7px;text-align:center}
+  .imgrow{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:880px){.imrow,.imgrow{grid-template-columns:1fr}}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--slate-bg);font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .kv td:first-child{color:var(--muted);width:230px;font-weight:600}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  hr{border:0;border-top:1px solid var(--line);margin:0}
+  footer{padding:24px 44px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line)}
+  @media(max-width:860px){.wrap{grid-template-columns:1fr}aside{position:static;height:auto}.content,.hero{padding-left:20px;padding-right:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside>
+    <div class="brand">Groove · Route A Bridge<small>UAT WALKTHROUGH</small></div>
+    <div class="navlabel">Get started</div>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#setup">Test‑data setup <span class="pill rd">no migration</span></a>
+    </nav>
+    <div class="navlabel">Salesforce team — test areas</div>
+    <nav>
+      <a href="#uat1">1 · Auto‑charge <span class="pill ok">proven</span></a>
+      <a href="#uat2">2 · Decline → Dunning <span class="pill ok">proven</span></a>
+      <a href="#uat3">3 · Pay‑Link <span class="pill ok">proven</span></a>
+      <a href="#uat4">4 · Partial payment <span class="pill rd">ready</span></a>
+      <a href="#uat5">5 · Dunning engine <span class="pill wt">timed</span></a>
+      <a href="#uat6">6 · Scoping <span class="pill rd">ready</span></a>
+      <a href="#uat7">7 · Surcharge <span class="pill ok">proven</span></a>
+    </nav>
+    <div class="navlabel">Finance team</div>
+    <nav><a href="#finance">Reconciliation checks</a></nav>
+    <div class="navlabel">Reference</div>
+    <nav>
+      <a href="#records">Records used</a>
+      <a href="#gaps">Known gaps / not in scope</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <span class="tag">Internal · Salesforce + Finance UAT</span>
+      <h1>Route A Collection Bridge — UAT Walkthrough</h1>
+      <p>A step‑by‑step, screenshot‑backed guide for testing the Chargebee → Revenue Cloud Billing collection bridge end‑to‑end in the Groove sandbox — <b>no data migration required</b>. Every screenshot below is a real record produced by the bridge during sandbox testing.</p>
+      <div class="meta">
+        <div class="chip"><span>Org</span> &nbsp;<b>Groove_Sandbox</b></div>
+        <div class="chip"><span>Gateway</span> &nbsp;<b>Authorize.net Test</b> (sandbox)</div>
+        <div class="chip"><span>Audience</span> &nbsp;<b>SF team · Finance/AR</b></div>
+        <div class="chip"><span>Prepared by</span> &nbsp;<b>SaaScend</b></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <section id="overview">
+        <h2>Overview</h2>
+        <div class="card">
+          <p class="lead">When an RCB <b>Invoice</b> is <b>Posted</b> and in‑scope (no Chargebee ID, balance &gt; 0), an asynchronous flow creates a Chargent <b>Charge Order</b> linked to the invoice and then either:</p>
+          <ul>
+            <li><b>Auto‑collect customers</b> (<code>Account.Auto_Collection__c = true</code>) → the stored card token is <b>charged automatically</b>.</li>
+            <li><b>Invoice‑only customers</b> (<code>Auto_Collection__c = false</code>) → a <b>hosted Pay Link</b> is generated for the customer to pay.</li>
+          </ul>
+          <p>A successful Chargent <b>Transaction</b> flows back: a <b>Payment</b> is created and applied to the invoice (<code>Collection_Status = Paid / Partially Paid</code>). A failed charge sets <code>Collection_Status = Failed</code> and is retried by the <b>dunning engine</b> (due+3, due+6) before ending at due+61.</p>
+          <h3>How to use this guide</h3>
+          <p class="lead">Do the one‑time <a href="#setup">Test‑data setup</a> first, then work each area. Each area lists the steps, shows what the real record looks like, and states the pass criteria. Finance follows the <a href="#finance">reconciliation checks</a>.</p>
+          <div class="legend">
+            <span><span class="dot" style="background:var(--green)"></span> Proven in sandbox (real charge)</span>
+            <span><span class="dot" style="background:var(--accent)"></span> Ready to test</span>
+            <span><span class="dot" style="background:var(--amber)"></span> Time‑gated</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETUP -->
+      <section id="setup">
+        <h2><span class="num">⚙</span> Test‑data setup <span class="badge b-rd" style="margin-left:auto">no migration needed</span></h2>
+        <div class="card">
+          <p class="lead">The only thing migration normally provides that UAT needs is a <b>stored card token on the account</b>. You create one by tokenizing an Auth.net <b>sandbox</b> card. ~10 minutes, once.</p>
+          <ol class="steps">
+            <li><b>Create / pick a test Account</b> (e.g. "UAT – Auto Collect Co"). Make two — one auto‑collect, one invoice‑only — to cover both paths.</li>
+            <li><b>Tokenize a sandbox card.</b> Create a Charge Order on the account (Gateway = <code>Authorize.net Test</code>, an Opportunity, Payment Method = Credit Card), open the Chargent payment component, <b>New Payment Method</b> → enter the test card (see below) → tokenize. This creates an Auth.net CIM token like <code>526956659‑539030077</code>.</li>
+            <li><b>Copy the token to the Account</b> field <code>Chargent_Payment_Token__c</code>. <i>(This is the step migration automates.)</i></li>
+            <li><b>Set the collection mode:</b> <code>Auto_Collection__c = TRUE</code> for auto‑charge, or <code>FALSE</code> for the Pay‑Link path. Optionally set <code>Apply_Surcharge__c</code>.</li>
+            <li><b>Generate an invoice</b> (Bill Now on an activated Order, or an existing Draft), set its <code>Opportunity__c</code>, and <b>Post</b> it.</li>
+          </ol>
+          <div class="callout note">
+            <div class="h">Heads‑up on the Account fields</div>
+            The collection fields (<code>Apply_Surcharge__c</code>, <code>Auto_Collection__c</code>, <code>Chargent_Payment_Token__c</code>) are on the <b>standard Account layout</b>. Some accounts use a record‑type‑specific (managed) layout where these aren't shown — set those via the API/data loader, or have an admin add the fields to that layout. Field security is already granted via <code>Groove_Invoice_Admin</code>.
+          </div>
+          <h3>Auth.net sandbox test card</h3>
+          <table class="kv">
+            <tr><td>Card (Visa, approve)</td><td><code>4111 1111 1111 1111</code> · exp <code>12/2030</code> · CVV <code>123</code> · ZIP <code>85001</code></td></tr>
+            <tr><td>Billing address</td><td>Use a complete address — Auth.net rejects incomplete addresses (error E00027).</td></tr>
+            <tr><td>Decline</td><td>Use Auth.net's published sandbox decline triggers (developer.authorize.net testing guide).</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- UAT-1 -->
+      <section id="uat1">
+        <div class="areatag">Auto‑collect</div>
+        <h2><span class="num">1</span> Auto‑charge a stored‑card customer <span class="badge b-ok" style="margin-left:auto">✓ Proven (real charge)</span></h2>
+        <div class="card">
+          <h3>Goal</h3>
+          <p class="lead">A Posted invoice on an auto‑collect account is charged automatically end‑to‑end, with the payment applied back and the invoice marked Paid.</p>
+          <h3>Steps</h3>
+          <ol class="steps">
+            <li>On an auto‑collect account (token set, <code>Auto_Collection = true</code>), open a Draft invoice with an Opportunity and a balance.</li>
+            <li>Click <b>Post</b>. (Posting is asynchronous here — allow a few minutes for <i>Posting In Progress → Posted</i>.)</li>
+            <li>Watch the bridge run automatically — no further clicks.</li>
+          </ol>
+          <div class="callout expect">
+            <div class="h">Expected result</div>
+            A Charge Order is auto‑created and charged → an <b>Approved</b> Transaction → a <b>Payment</b> applied → invoice <b>Balance 0, Collection Status = Paid</b>.
+          </div>
+          <figure><img src="img/uat1-invoice-collection.png" alt="Invoice DOC-000000009 Collection section">
+            <figcaption>Invoice <b>DOC‑000000009</b> after auto‑charge — Balance <b>USD 0.00</b>, Net Payments <b>USD 174.00</b>, <b>Collection Status = Paid</b>, linked Charge Order <b>ORD‑000013090</b>.</figcaption></figure>
+          <div class="imgrow">
+            <figure><img src="img/uat1-charge-order.png" alt="Charge Order ORD-000013090">
+              <figcaption><b>ORD‑000013090</b> — Charge Order auto‑created by the bridge (Account, Authorize.net Test gateway, $174).</figcaption></figure>
+            <figure><img src="img/uat1-transaction-approved.png" alt="Transaction TRX-000015047 Approved">
+              <figcaption><b>TRX‑000015047</b> — Charge / <b>Approved</b> / $174, Gateway ID 80056543875 ("This transaction has been approved").</figcaption></figure>
+          </div>
+          <div class="imgrow">
+            <figure><img src="img/uat1-payment.png" alt="Payment P-000000038">
+              <figcaption><b>P‑000000038</b> — Payment created &amp; applied to the invoice (External / Processed).</figcaption></figure>
+            <figure><img src="img/uat1-invoice-paid.png" alt="Invoice DOC-9 header">
+              <figcaption><b>DOC‑000000009</b> header — Status <b>Posted</b>, Total $174, Settlement <b>Settled</b>, Payment Total $174.</figcaption></figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- UAT-2 -->
+      <section id="uat2">
+        <div class="areatag">Auto‑collect · failure path</div>
+        <h2><span class="num">2</span> Declined charge → failure capture → dunning <span class="badge b-ok" style="margin-left:auto">✓ Proven</span></h2>
+        <div class="card">
+          <h3>Goal</h3>
+          <p class="lead">A failed charge is captured cleanly (no phantom payment), the invoice is flagged, and it enters the dunning queue for automatic retries.</p>
+          <h3>Steps</h3>
+          <ol class="steps">
+            <li>On an auto‑collect account, use a decline sandbox card/trigger when tokenizing.</li>
+            <li>Post the invoice and let the auto‑charge run.</li>
+          </ol>
+          <div class="callout expect">
+            <div class="h">Expected result</div>
+            Transaction <b>Declined/Error</b>; <b>no Payment</b>; balance unchanged; invoice <b>Collection Status = Failed</b> with the gateway error in <b>Last Collection Error</b>; invoice now in the dunning set.
+          </div>
+          <figure><img src="img/uat2-failed-collection.png" alt="Invoice DOC-000000006 Failed">
+            <figcaption>Invoice <b>DOC‑000000006</b> — <b>Collection Status = Failed</b>, the gateway error captured in <b>Last Collection Error</b>, balance still $174 (no money recorded without an approval).</figcaption></figure>
+          <div class="callout note">
+            <div class="h">Why this matters</div>
+            A pre‑existing bug let a receipt automation roll back the Transaction — a card could be charged with <b>no</b> Salesforce record. That's fixed: failures now always record (as above), so Finance never has a "charged‑but‑not‑recorded" gap.
+          </div>
+        </div>
+      </section>
+
+      <!-- UAT-3 -->
+      <section id="uat3">
+        <div class="areatag">Invoice‑only</div>
+        <h2><span class="num">3</span> Hosted Pay‑Link for invoice‑only customers <span class="badge b-ok" style="margin-left:auto">✓ Proven</span></h2>
+        <div class="card">
+          <h3>Goal</h3>
+          <p class="lead">For customers who pay themselves, the bridge generates a branded hosted payment link on the invoice instead of auto‑charging.</p>
+          <h3>Steps</h3>
+          <ol class="steps">
+            <li>On an invoice‑only account (<code>Auto_Collection = false</code>), post an invoice.</li>
+            <li>Open the invoice's <b>Pay Link</b> and pay it to confirm the round‑trip.</li>
+          </ol>
+          <div class="callout expect">
+            <div class="h">Expected result</div>
+            Charge Order + Payment Request created; invoice <b>Pay Link</b> populated; <b>Collection Status = Manual / Invoice Only</b>. Paying the link produces a Transaction → Payment applied → Paid.
+          </div>
+          <figure><img src="img/uat3-paylink-collection.png" alt="Invoice DOC-000000005 pay link">
+            <figcaption>Invoice <b>DOC‑000000005</b> — <b>Collection Status = Manual / Invoice Only</b>, hosted <b>Pay Link</b> populated, Charge Order <b>ORD‑000013088</b>.</figcaption></figure>
+        </div>
+      </section>
+
+      <!-- UAT-4 -->
+      <section id="uat4">
+        <div class="areatag">Payments</div>
+        <h2><span class="num">4</span> Partial payment <span class="badge b-rd" style="margin-left:auto">Ready to test</span></h2>
+        <div class="card">
+          <h3>Steps</h3>
+          <ol class="steps">
+            <li>Charge / pay an amount <b>less than</b> the invoice balance.</li>
+          </ol>
+          <div class="callout expect">
+            <div class="h">Expected result</div>
+            Payment applied for the partial amount; <b>Collection Status = Partially Paid</b>; balance reduced but greater than 0. (The Collection section — see UAT‑1 — surfaces these states.)
+          </div>
+        </div>
+      </section>
+
+      <!-- UAT-5 -->
+      <section id="uat5">
+        <div class="areatag">Dunning</div>
+        <h2><span class="num">5</span> Dunning / retry engine <span class="badge b-wt" style="margin-left:auto">Time‑gated</span></h2>
+        <div class="card">
+          <h3>Goal</h3>
+          <p class="lead">Failed invoices are automatically retried and, if still unpaid, closed out — with the subscription left active.</p>
+          <p>The scheduled flow <code>Invoice_Dunning_Retry</code> runs daily (08:00 UTC) over Posted / unpaid / <b>Failed</b> invoices. The tracking fields live in the invoice's Collection section (<b>Dunning Retry Count</b>, <b>Last Dunning Attempt</b> — visible in the UAT‑1 screenshot).</p>
+          <div class="callout expect">
+            <div class="h">Expected behaviour over time</div>
+            <b>due+3</b> → retry #1 (count → 1) · <b>due+6</b> → retry #2 (count → 2) · <b>due+61</b> → <b>Collection Status = Dunning Ended - Not Paid</b> (subscription left active). A retry that succeeds → Paid.
+          </div>
+          <div class="callout note">
+            <div class="h">Testing note</div>
+            <code>DueDate</code> is immutable on Posted invoices, so you can't fast‑forward it. Either let a real Failed invoice age, or ask SaaScend to seed a time‑shifted Failed invoice (pre‑Post) to exercise a full cycle.
+          </div>
+        </div>
+      </section>
+
+      <!-- UAT-6 -->
+      <section id="uat6">
+        <div class="areatag">Scoping</div>
+        <h2><span class="num">6</span> Scoping guardrails — should NOT fire <span class="badge b-rd" style="margin-left:auto">Ready to test</span></h2>
+        <div class="card">
+          <h3>Steps &amp; expected</h3>
+          <ol class="steps">
+            <li>An invoice <b>with</b> a Chargebee ID → bridge does <b>not</b> fire (migrated/legacy invoices excluded). ✓</li>
+            <li>A <b>zero‑balance</b> invoice → does not fire. ✓</li>
+            <li>An invoice already linked to a Charge Order → no double‑create. ✓</li>
+          </ol>
+          <div class="callout expect">
+            <div class="h">Expected result</div>
+            No Charge Order is created in any of these cases.
+          </div>
+        </div>
+      </section>
+
+      <!-- UAT-7 -->
+      <section id="uat7">
+        <div class="areatag">Surcharge</div>
+        <h2><span class="num">7</span> Surcharge toggle <span class="badge b-ok" style="margin-left:auto">✓ Logic proven</span></h2>
+        <div class="card">
+          <h3>Goal</h3>
+          <p class="lead">Surcharge is a single manual switch — off for most customers, on for the few who get surcharged.</p>
+          <h3>Steps</h3>
+          <ol class="steps">
+            <li>On a test account set <b>Apply Surcharge</b> = TRUE (default is OFF).</li>
+            <li>Post an invoice / create a Charge Order for that account.</li>
+            <li>Open the Charge Order and check the <b>Waive Fee</b> field.</li>
+          </ol>
+          <div class="callout expect">
+            <div class="h">Expected result</div>
+            <code>Apply_Surcharge = TRUE</code> → Charge Order <b>Waive Fee = false</b> (surcharge applies). <code>FALSE</code> → <b>Waive Fee = true</b> (waived). Verified both directions in sandbox.
+          </div>
+          <div class="callout note">
+            <div class="h">One dependency</div>
+            Salesforce only toggles <b>Waive Fee</b>; the surcharge <b>rate</b> is configured in Chargent. Until Chargent's fee feature is set with a rate, the toggle flips correctly but no surcharge amount is added.
+          </div>
+        </div>
+      </section>
+
+      <!-- FINANCE -->
+      <section id="finance">
+        <h2><span class="num">$</span> Finance / reconciliation checks</h2>
+        <div class="card">
+          <p class="lead">After the SF‑team scenarios, Finance confirms the money/ledger view. See the <b>AR / Finance SOP</b> for day‑to‑day operation.</p>
+          <table>
+            <tr><th>#</th><th>Check</th><th>Pass criteria</th></tr>
+            <tr><td>FIN‑1</td><td>Payment matches gateway transaction</td><td>Payment <code>GatewayRefNumber</code> = the Auth.net Transaction ID; applied via PaymentLineInvoice.</td></tr>
+            <tr><td>FIN‑2</td><td>Invoice balance / status reconciles</td><td>Balance = original − applied Payments; Collection Status reflects Paid / Partially Paid.</td></tr>
+            <tr><td>FIN‑3</td><td>No phantom payments on failure</td><td>A declined/errored charge creates <b>no</b> Payment; invoice unpaid with error captured.</td></tr>
+            <tr><td>FIN‑4</td><td>Dunning‑ended reportable</td><td><code>Collection Status = Dunning Ended - Not Paid</code> filterable for write‑off / AR follow‑up; subscription still active.</td></tr>
+          </table>
+          <div class="callout expect">
+            <div class="h">Proven example (FIN‑1)</div>
+            Transaction <b>TRX‑000015047</b> (Gateway ID 80056543875) → Payment <b>P‑000000038</b> (GatewayRefNumber 80056543875) applied to <b>DOC‑000000009</b> → Balance 0 / Paid. The reference flows cleanly end‑to‑end.
+          </div>
+        </div>
+      </section>
+
+      <!-- RECORDS -->
+      <section id="records">
+        <h2>Records used in this guide</h2>
+        <div class="card">
+          <table>
+            <tr><th>Area</th><th>Record</th><th>What it shows</th></tr>
+            <tr><td>Auto‑charge</td><td>DOC‑000000009 · ORD‑000013090 · TRX‑000015047 · P‑000000038</td><td>Posted invoice → auto charge → Approved txn → Payment → Paid</td></tr>
+            <tr><td>Pay‑Link</td><td>DOC‑000000005 · ORD‑000013088</td><td>Manual / Invoice Only + hosted Pay Link</td></tr>
+            <tr><td>Failure</td><td>DOC‑000000006 · ORD‑000013089</td><td>Failed + Last Collection Error captured</td></tr>
+          </table>
+          <p class="lead" style="margin-top:12px">Companion docs: <b>UAT Guide</b> (markdown), <b>AR/Finance SOP</b>, <b>Handover Summary</b>, <b>Route A Bridge Design</b>, and the live <b>UAT Tracker</b> Google Sheet.</p>
+        </div>
+      </section>
+
+      <!-- GAPS -->
+      <section id="gaps">
+        <h2>Known gaps / not in scope for this UAT</h2>
+        <div class="card">
+          <table>
+            <tr><th>Item</th><th>Status</th></tr>
+            <tr><td>Surcharge <b>rate</b> in Chargent</td><td>Logic built; rate/fee‑feature config pending (Rory)</td></tr>
+            <tr><td>Token + Auto_Collection <b>migration</b></td><td>Phase 2 data work; UAT uses self‑seeded test data</td></tr>
+            <tr><td>Production gateway</td><td>UAT uses the Auth.net <b>sandbox</b> gateway; prod repoints at cutover</td></tr>
+            <tr><td>Conga invoice "Pay Now" merge</td><td>Confirm <code>{!Invoice.Pay_Link__c}</code> merged into the PDF (Rory)</td></tr>
+            <tr><td>Account fields on record‑type layouts</td><td>On the standard layout; managed record‑type layouts need a UI add</td></tr>
+            <tr><td>Org‑health Apex blocker</td><td>Gates <b>production</b> deploy only — not UAT</td></tr>
+          </table>
+        </div>
+      </section>
+
+    </div>
+    <footer>
+      Groove — Route A Collection Bridge · UAT Walkthrough · Prepared by SaaScend · Sandbox screenshots captured live from <code>Groove_Sandbox</code>. Internal use.
+    </footer>
+  </main>
+</div>
+</body>
+</html>
