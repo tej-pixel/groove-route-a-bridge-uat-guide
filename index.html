@@ -109,7 +109,7 @@
     <nav>
       <a href="#uat1">1 · Auto‑charge <span class="pill ok">proven</span></a>
       <a href="#uat2">2 · Decline → Dunning <span class="pill ok">proven</span></a>
-      <a href="#uat3">3 · Pay‑Link <span class="pill ok">proven</span></a>
+      <a href="#uat3">3 · Pay‑Link <span class="pill wt">issue</span></a>
       <a href="#uat4">4 · Partial payment <span class="pill rd">ready</span></a>
       <a href="#uat5">5 · Dunning engine <span class="pill wt">timed</span></a>
       <a href="#uat6">6 · Scoping <span class="pill rd">ready</span></a>
@@ -246,7 +246,7 @@
       <!-- UAT-3 -->
       <section id="uat3">
         <div class="areatag">Invoice‑only</div>
-        <h2><span class="num">3</span> Hosted Pay‑Link for invoice‑only customers <span class="badge b-ok" style="margin-left:auto">✓ Proven</span></h2>
+        <h2><span class="num">3</span> Hosted Pay‑Link for invoice‑only customers <span class="badge b-wt" style="margin-left:auto">⚠ Generation OK · page broken</span></h2>
         <div class="card">
           <h3>Goal</h3>
           <p class="lead">For customers who pay themselves, the bridge generates a branded hosted payment link on the invoice instead of auto‑charging.</p>
@@ -256,11 +256,17 @@
             <li>Open the invoice's <b>Pay Link</b> and pay it to confirm the round‑trip.</li>
           </ol>
           <div class="callout expect">
-            <div class="h">Expected result</div>
-            Charge Order + Payment Request created; invoice <b>Pay Link</b> populated; <b>Collection Status = Manual / Invoice Only</b>. Paying the link produces a Transaction → Payment applied → Paid.
+            <div class="h">What works — link generation ✓</div>
+            Charge Order + Payment Request created; invoice <b>Pay Link</b> populated; <b>Collection Status = Manual / Invoice Only</b>.
           </div>
           <figure><img src="img/uat3-paylink-collection.png" alt="Invoice DOC-000000005 pay link">
             <figcaption>Invoice <b>DOC‑000000005</b> — <b>Collection Status = Manual / Invoice Only</b>, hosted <b>Pay Link</b> populated, Charge Order <b>ORD‑000013088</b>.</figcaption></figure>
+          <div class="callout danger">
+            <div class="h">⚠ Known issue — the hosted payment page does NOT work</div>
+            Opening the Pay Link (even a <b>freshly generated</b> one, in a logged‑out browser) shows <b>"Your payment request has expired"</b> with no card form — so a customer currently <b>cannot</b> pay via the link. Verified 2026‑06‑29 with a link 2 minutes old; the expiry config is correctly 24h, so this is a <b>Chargent / Salesforce Sites platform defect</b> (escalate to Chargent Support), not a setting. <b>Card entry + charging itself works</b> — see UAT‑1 (real $174 Auth.net charge) and the in‑org Chargent payment component; only the customer‑facing hosted link is broken.
+          </div>
+          <figure><img src="img/uat3-paylink-EXPIRED.png" alt="Pay Link expired page">
+            <figcaption>The hosted Pay Link page for a brand‑new request — <b>"Your payment request has expired"</b>, no payment form rendered.</figcaption></figure>
         </div>
       </section>
 
@@ -380,6 +386,7 @@
         <div class="card">
           <table>
             <tr><th>Item</th><th>Status</th></tr>
+            <tr><td>🔴 <b>Hosted Pay Link page</b> (invoice‑only self‑pay)</td><td><b>Broken</b> — fresh links show "expired", no card form. Chargent/Sites platform defect → <b>Chargent Support ticket logged</b>. Auto‑collect charging is unaffected; AR can take payment via the in‑org Take Payment component as interim.</td></tr>
             <tr><td>Surcharge <b>rate</b> in Chargent</td><td>Logic built; rate/fee‑feature config pending (Rory)</td></tr>
             <tr><td>Token + Auto_Collection <b>migration</b></td><td>Phase 2 data work; UAT uses self‑seeded test data</td></tr>
             <tr><td>Production gateway</td><td>UAT uses the Auth.net <b>sandbox</b> gateway; prod repoints at cutover</td></tr>
